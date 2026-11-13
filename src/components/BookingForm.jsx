@@ -79,35 +79,39 @@ export default function BookingForm({ services }) {
     };
   }, [serviceId, date, refreshKey]);
 
-  async function handleSubmit(e) {
+    async function handleSubmit(e) {
     e.preventDefault();
     setError("");
     setSubmitting(true);
 
-    const { error } = await supabase.rpc("create_booking", {
-      p_service_id: Number(serviceId),
-      p_date: date,
-      p_time: time,
-      p_name: name,
-      p_phone: phone,
-    });
+    try {
+      const res = await fetch("/api/book", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ serviceId, date, time, name, phone }),
+      });
+      const result = await res.json();
 
-    setSubmitting(false);
-
-    if (error) {
-      if (error.message.includes("no longer available")) {
-        setError("Sorry, that slot was just taken. Please choose another time.");
-        setTime("");
-        setRefreshKey((k) => k + 1);
-      } else {
-        setError("Something went wrong. Please check your details and try again.");
+      if (!res.ok) {
+        if (result.error === "slot_taken") {
+          setError("Sorry, that slot was just taken. Please choose another time.");
+          setTime("");
+          setRefreshKey((k) => k + 1);
+        } else {
+          setError("Something went wrong. Please check your details and try again.");
+        }
+        setSubmitting(false);
+        return;
       }
-      return;
+
+      setConfirmed({ service: service.name, date, time, name });
+    } catch {
+      setError("Network problem. Please try again.");
     }
 
-    setConfirmed({ service: service.name, date, time, name });
+    setSubmitting(false);
   }
-
+  
   if (confirmed) {
     return (
       <div className="rounded-2xl border border-accent/40 bg-white/60 p-8 text-center">

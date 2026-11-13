@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import BookingsAdmin from "./BookingsAdmin";
 import ServicesAdmin from "./ServicesAdmin";
+import NotificationToggle from "./NotificationToggle";
 
 const inputClass =
   "w-full rounded-xl border border-accent/40 bg-white/60 px-4 py-3 text-sm outline-none focus:border-accent";
@@ -88,6 +89,10 @@ export default function AdminPanel() {
         </button>
       </div>
 
+      <div className="mt-6">
+        <NotificationToggle />
+      </div>
+      
       <div className="mt-8 flex gap-2 border-b border-accent/30">
         {["bookings", "services"].map((t) => (
           <button
