@@ -11,14 +11,30 @@ export async function POST(request) {
     return NextResponse.json({ error: "invalid" }, { status: 400 });
   }
 
-  const { serviceId, date, time, name, phone } = body;
+  const { serviceIds, date, time, name, phone } = body;
 
-  if (!serviceId || !date || !time || !name || !phone) {
+  if (
+    !Array.isArray(serviceIds) ||
+    serviceIds.length < 1 ||
+    serviceIds.length > 3 ||
+    !date ||
+    !time ||
+    !name ||
+    !phone
+  ) {
     return NextResponse.json({ error: "invalid" }, { status: 400 });
   }
 
-  const { error } = await supabase.rpc("create_booking", {
-    p_service_id: Number(serviceId),
+  const ids = serviceIds.map(Number);
+  if (
+    ids.some((n) => !Number.isInteger(n) || n <= 0) ||
+    new Set(ids).size !== ids.length
+  ) {
+    return NextResponse.json({ error: "invalid" }, { status: 400 });
+  }
+
+  const { data, error } = await supabase.rpc("create_booking", {
+    p_service_ids: ids,
     p_date: date,
     p_time: time,
     p_name: name,
@@ -33,25 +49,31 @@ export async function POST(request) {
     );
   }
 
+  const total = data?.total_price ?? null;
+
   // The booking is saved. If the alert fails, the customer still succeeds.
   try {
-    const { data: service } = await supabase
+    const { data: services } = await supabase
       .from("services")
-      .select("name")
-      .eq("id", Number(serviceId))
-      .single();
+      .select("id, name")
+      .in("id", ids);
 
-    const serviceName = service?.name ?? "Appointment";
+    const names =
+      ids
+        .map((id) => services?.find((s) => s.id === id)?.name)
+        .filter(Boolean)
+        .join(" + ") || "Appointment";
+
     const when = `${formatDate(date)} at ${formatTime(time)}`;
 
     await sendPush({
       title: "New booking",
-      body: `${name} · ${serviceName} · ${when}`,
+      body: `${name} · ${names} · ₹${total} · ${when}`,
       url: "/admin",
     });
   } catch (e) {
     console.error("Notification failed:", e);
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, total });
 }

@@ -35,7 +35,7 @@ export default function BookingsAdmin() {
       let query = supabase
         .from("bookings")
         .select(
-          "id, customer_name, phone, booking_date, start_time, end_time, status, services(name)"
+                    "id, customer_name, phone, booking_date, start_time, end_time, status, total_price, services(name), booking_items(service_name, price)"
         );
 
       if (filter === "today") query = query.eq("booking_date", today);
@@ -89,7 +89,11 @@ export default function BookingsAdmin() {
       </div>
 
       {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
-      {loading && <p className="mt-6 text-sm opacity-70">Loading bookings…</p>}
+      {loading && <p className="text-sm opacity-70">
+                    {b.booking_items?.length
+                      ? b.booking_items.map((i) => i.service_name).join(" + ")
+                      : b.services?.name}
+                  </p>
       {!loading && bookings.length === 0 && !error && (
         <p className="mt-6 text-sm opacity-70">No bookings here.</p>
       )}
@@ -120,6 +124,9 @@ export default function BookingsAdmin() {
                 {formatDate(b.booking_date)} · {formatTime(b.start_time)} –{" "}
                 {formatTime(b.end_time)}
               </p>
+                            {b.total_price != null && (
+                <p className="mt-1 text-sm font-medium">Total: ₹{b.total_price}</p>
+              )}
 
               <p className="mt-1 text-sm">
                 <a href={`tel:${b.phone}`} className="hover:text-accent">

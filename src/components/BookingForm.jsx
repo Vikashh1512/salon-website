@@ -1,8 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/lib/supabase";
 import { siteConfig } from "@/lib/siteConfig";
+import { buildUpiLink } from "@/lib/upi";
+
+const MAX_SERVICES = 3;
 
 function formatTime(t) {
   const [h, m] = t.split(":");
@@ -30,7 +34,7 @@ const inputClass =
 
 export default function BookingForm({ services }) {
   const [limits, setLimits] = useState({ min: "", max: "" });
-  const [serviceId, setServiceId] = useState("");
+  const [selectedIds, setSelectedIds] = useState([]);
   const [date, setDate] = useState("");
   const [slots, setSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -42,7 +46,12 @@ export default function BookingForm({ services }) {
   const [error, setError] = useState("");
   const [confirmed, setConfirmed] = useState(null);
 
-  const service = services.find((s) => String(s.id) === serviceId);
+  const selected = selectedIds
+    .map((id) => services.find((s) => s.id === id))
+    .filter(Boolean);
+  const totalPrice = selected.reduce((sum, s) => sum + s.price, 0);
+  const totalDuration = selected.reduce((sum, s) => sum + s.duration_minutes, 0);
+  const idsKey = selectedIds.join(",");
 
   // Bookable dates: today up to 30 days ahead
   useEffect(() => {
@@ -51,16 +60,17 @@ export default function BookingForm({ services }) {
     setLimits({ min: toDateString(new Date()), max: toDateString(last) });
   }, []);
 
-  // Load free slots whenever the service or date changes
+  // Load free slots whenever the services or date change
   useEffect(() => {
-    if (!serviceId || !date) return;
+    if (!idsKey || !date) return;
     let ignore = false;
+    const ids = idsKey.split(",").map(Number);
 
     async function load() {
       setLoadingSlots(true);
       setError("");
       const { data, error } = await supabase.rpc("get_available_slots", {
-        p_service_id: Number(serviceId),
+        p_service_ids: ids,
         p_date: date,
       });
       if (ignore) return;
@@ -77,9 +87,18 @@ export default function BookingForm({ services }) {
     return () => {
       ignore = true;
     };
-  }, [serviceId, date, refreshKey]);
+  }, [idsKey, date, refreshKey]);
 
-    async function handleSubmit(e) {
+  function toggleService(id) {
+    setTime("");
+    setSelectedIds((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.length >= MAX_SERVICES) return prev;
+      return [...prev, id];
+    });
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault();
     setError("");
     setSubmitting(true);
@@ -88,7 +107,7 @@ export default function BookingForm({ services }) {
       const res = await fetch("/api/book", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ serviceId, date, time, name, phone }),
+        body: JSON.stringify({ serviceIds: selectedIds, date, time, name, phone }),
       });
       const result = await res.json();
 
@@ -104,29 +123,81 @@ export default function BookingForm({ services }) {
         return;
       }
 
-      setConfirmed({ service: service.name, date, time, name });
+      setConfirmed({
+        items: selected.map((s) => ({ name: s.name, price: s.price })),
+        total: result.total ?? totalPrice,
+        date,
+        time,
+        name,
+      });
     } catch {
       setError("Network problem. Please try again.");
     }
 
     setSubmitting(false);
   }
-  
+
   if (confirmed) {
+    const upiLink = siteConfig.upiId
+      ? buildUpiLink(confirmed.total, `${siteConfig.name} booking`)
+      : null;
+
     return (
       <div className="rounded-2xl border border-accent/40 bg-white/60 p-8 text-center">
         <h2 className="font-heading text-3xl">Booking received</h2>
         <p className="mt-4 opacity-80">
           Thank you, {confirmed.name}. Your appointment is booked.
         </p>
+
         <div className="mt-6 space-y-1 text-sm">
-          <p><span className="opacity-70">Service:</span> {confirmed.service}</p>
-          <p><span className="opacity-70">Date:</span> {formatDate(confirmed.date)}</p>
-          <p><span className="opacity-70">Time:</span> {formatTime(confirmed.time)}</p>
+          <p>
+            <span className="opacity-70">Date:</span> {formatDate(confirmed.date)}
+          </p>
+          <p>
+            <span className="opacity-70">Time:</span> {formatTime(confirmed.time)}
+          </p>
         </div>
+
+        <ul className="mx-auto mt-6 max-w-xs space-y-2 text-sm">
+          {confirmed.items.map((item) => (
+            <li key={item.name} className="flex justify-between">
+              <span>{item.name}</span>
+              <span>₹{item.price}</span>
+            </li>
+          ))}
+          <li className="flex justify-between border-t border-accent/30 pt-2 text-base font-medium">
+            <span>Total</span>
+            <span>₹{confirmed.total}</span>
+          </li>
+        </ul>
+
+        {upiLink ? (
+          <div className="mt-8 border-t border-accent/30 pt-8">
+            <p className="text-sm font-medium">Pay ₹{confirmed.total} with UPI</p>
+            <div className="mt-4 inline-block rounded-2xl bg-white p-4">
+              <QRCodeSVG value={upiLink} size={192} />
+            </div>
+            <p className="mt-3 text-xs opacity-70">
+              Scan with any UPI app, or tap the button below on your phone.
+            </p>
+            <a
+              href={upiLink}
+              className="mt-4 inline-block rounded-full bg-ink px-6 py-3 text-sm text-paper transition hover:opacity-90"
+            >
+              Pay with UPI app
+            </a>
+            <p className="mt-4 text-xs opacity-70">
+              You can also pay at the salon.
+            </p>
+          </div>
+        ) : (
+          <p className="mt-6 text-sm opacity-80">
+            Payment is made at the salon via UPI.
+          </p>
+        )}
+
         <p className="mt-6 text-sm opacity-80">
-          Payment is made at the salon via UPI. Need to change something? Call{" "}
-          {siteConfig.phone}.
+          Need to change something? Call {siteConfig.phone}.
         </p>
       </div>
     );
@@ -135,23 +206,65 @@ export default function BookingForm({ services }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <div>
-        <label className="mb-2 block text-sm font-medium">1. Choose a service</label>
-        <select
-          value={serviceId}
-          onChange={(e) => {
-            setServiceId(e.target.value);
-            setTime("");
-          }}
-          className={inputClass}
-          required
-        >
-          <option value="">Select a service</option>
-          {services.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name} · {s.duration_minutes} min · ₹{s.price}
-            </option>
-          ))}
-        </select>
+        <label className="mb-2 block text-sm font-medium">
+          1. Choose services{" "}
+          <span className="font-normal opacity-60">(up to {MAX_SERVICES})</span>
+        </label>
+
+        <div className="space-y-3">
+          {services.map((s) => {
+            const isSelected = selectedIds.includes(s.id);
+            const disabled = !isSelected && selectedIds.length >= MAX_SERVICES;
+
+            return (
+              <button
+                type="button"
+                key={s.id}
+                onClick={() => toggleService(s.id)}
+                disabled={disabled}
+                className={`flex w-full items-center justify-between rounded-2xl border p-4 text-left transition ${
+                  isSelected
+                    ? "border-ink bg-white"
+                    : "border-accent/40 bg-white/60 hover:border-ink"
+                } ${disabled ? "opacity-40" : ""}`}
+              >
+                <span>
+                  <span className="block text-sm font-medium">{s.name}</span>
+                  <span className="block text-xs opacity-70">
+                    {s.duration_minutes} min
+                  </span>
+                </span>
+                <span className="flex items-center gap-3 text-sm">
+                  <span>₹{s.price}</span>
+                  <span
+                    className={`flex h-5 w-5 items-center justify-center rounded-full border text-xs ${
+                      isSelected
+                        ? "border-ink bg-ink text-paper"
+                        : "border-accent/60"
+                    }`}
+                  >
+                    {isSelected ? "✓" : ""}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {selected.length > 0 && (
+          <div className="mt-4 flex items-center justify-between rounded-2xl bg-ink px-5 py-3 text-sm text-paper">
+            <span>
+              {selected.length} selected · {totalDuration} min
+            </span>
+            <span>Total ₹{totalPrice}</span>
+          </div>
+        )}
+
+        {selectedIds.length >= MAX_SERVICES && (
+          <p className="mt-2 text-xs opacity-70">
+            You can add up to {MAX_SERVICES} services per appointment.
+          </p>
+        )}
       </div>
 
       <div>
@@ -170,7 +283,7 @@ export default function BookingForm({ services }) {
         />
       </div>
 
-      {serviceId && date && (
+      {selectedIds.length > 0 && date && (
         <div>
           <label className="mb-2 block text-sm font-medium">3. Choose a time</label>
           {loadingSlots ? (
@@ -229,7 +342,7 @@ export default function BookingForm({ services }) {
 
       <button
         type="submit"
-        disabled={!time || !name || !phone || submitting}
+        disabled={selectedIds.length === 0 || !time || !name || !phone || submitting}
         className="w-full rounded-full bg-ink px-6 py-3 text-sm text-paper transition hover:opacity-90 disabled:opacity-40"
       >
         {submitting ? "Booking…" : "Confirm booking"}
