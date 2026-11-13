@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { formatDate, formatTime } from "@/lib/format";
 import { sendPush } from "@/lib/notify";
 
@@ -11,7 +12,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "invalid" }, { status: 400 });
   }
 
-  const { serviceIds, date, time, name, phone } = body;
+  const { serviceIds, date, time, name, phone, screenshot } = body;
 
   if (
     !Array.isArray(serviceIds) ||
@@ -50,6 +51,26 @@ export async function POST(request) {
   }
 
   const total = data?.total_price ?? null;
+
+  if (screenshot) {
+    const { data: latest } = await supabaseAdmin
+      .from("bookings")
+      .select("id")
+      .eq("booking_date", date)
+      .eq("start_time", time)
+      .eq("phone", phone.trim())
+      .order("id", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (latest?.id) {
+      const { error: upErr } = await supabaseAdmin
+        .from("bookings")
+        .update({ payment_screenshot: screenshot })
+        .eq("id", latest.id);
+      if (upErr) console.error("Screenshot save error:", upErr);
+    }
+  }
 
   // The booking is saved. If the alert fails, the customer still succeeds.
   try {

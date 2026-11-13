@@ -35,7 +35,7 @@ export default function BookingsAdmin() {
       let query = supabase
         .from("bookings")
         .select(
-                    "id, customer_name, phone, booking_date, start_time, end_time, status, total_price, services(name), booking_items(service_name, price)"
+          "id, customer_name, phone, booking_date, start_time, end_time, status, total_price, payment_screenshot, services(name), booking_items(service_name, price)"
         );
 
       if (filter === "today") query = query.eq("booking_date", today);
@@ -124,8 +124,37 @@ export default function BookingsAdmin() {
                 {formatDate(b.booking_date)} · {formatTime(b.start_time)} –{" "}
                 {formatTime(b.end_time)}
               </p>
-                            {b.total_price != null && (
-                <p className="mt-1 text-sm font-medium">Total: ₹{b.total_price}</p>
+
+              {b.total_price != null && (
+                <p className="mt-1 text-sm font-medium">
+                  Total: ₹{b.total_price} ·{" "}
+                  <span className="font-normal opacity-70">
+                    {b.payment_screenshot ? "Paid via UPI" : "Pay at salon"}
+                  </span>
+                </p>
+              )}
+
+              {b.payment_screenshot && (
+                <div className="mt-3">
+                  <p className="mb-1 text-xs opacity-70">Payment screenshot:</p>
+                  <img
+                    src={b.payment_screenshot}
+                    alt="Payment screenshot"
+                    className="max-h-56 rounded-xl border border-accent/40"
+                  />
+                </div>
+              )}
+              {b.payment_screenshot && (
+                <details className="mt-2 text-xs">
+                  <summary className="cursor-pointer text-accent hover:underline">
+                    View payment screenshot
+                  </summary>
+                  <img
+                    src={b.payment_screenshot}
+                    alt="Payment screenshot"
+                    className="mt-2 max-h-64 rounded-xl border border-accent/40"
+                  />
+                </details>
               )}
 
               <p className="mt-1 text-sm">

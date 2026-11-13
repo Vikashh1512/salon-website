@@ -45,12 +45,17 @@ export default function BookingForm({ services }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [confirmed, setConfirmed] = useState(null);
+  const [showUpload, setShowUpload] = useState(false);
+  const [screenshot, setScreenshot] = useState("");
 
   const selected = selectedIds
     .map((id) => services.find((s) => s.id === id))
     .filter(Boolean);
   const totalPrice = selected.reduce((sum, s) => sum + s.price, 0);
-  const totalDuration = selected.reduce((sum, s) => sum + s.duration_minutes, 0);
+  const totalDuration = Math.min(
+    60,
+    selected.reduce((sum, s) => sum + s.duration_minutes, 0)
+  );
   const idsKey = selectedIds.join(",");
 
   // Bookable dates: today up to 30 days ahead
@@ -98,16 +103,50 @@ export default function BookingForm({ services }) {
     });
   }
 
+  function handleFileChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const max = 800;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        setScreenshot(canvas.toDataURL("image/jpeg", 0.7));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
+    const paidOnline = e.nativeEvent?.submitter?.value === "paid";
     setError("");
+
+    if (paidOnline && !screenshot) {
+      setError("Please upload your payment screenshot first.");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
       const res = await fetch("/api/book", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ serviceIds: selectedIds, date, time, name, phone }),
+        body: JSON.stringify({
+          serviceIds: selectedIds,
+          date,
+          time,
+          name,
+          phone,
+          screenshot: paidOnline ? screenshot : null,
+        }),
       });
       const result = await res.json();
 
@@ -138,10 +177,6 @@ export default function BookingForm({ services }) {
   }
 
   if (confirmed) {
-    const upiLink = siteConfig.upiId
-      ? buildUpiLink(confirmed.total, `${siteConfig.name} booking`)
-      : null;
-
     return (
       <div className="rounded-2xl border border-accent/40 bg-white/60 p-8 text-center">
         <h2 className="font-heading text-3xl">Booking received</h2>
@@ -171,37 +206,17 @@ export default function BookingForm({ services }) {
           </li>
         </ul>
 
-        {upiLink ? (
-          <div className="mt-8 border-t border-accent/30 pt-8">
-            <p className="text-sm font-medium">Pay ₹{confirmed.total} with UPI</p>
-            <div className="mt-4 inline-block rounded-2xl bg-white p-4">
-              <QRCodeSVG value={upiLink} size={192} />
-            </div>
-            <p className="mt-3 text-xs opacity-70">
-              Scan with any UPI app, or tap the button below on your phone.
-            </p>
-            <a
-              href={upiLink}
-              className="mt-4 inline-block rounded-full bg-ink px-6 py-3 text-sm text-paper transition hover:opacity-90"
-            >
-              Pay with UPI app
-            </a>
-            <p className="mt-4 text-xs opacity-70">
-              You can also pay at the salon.
-            </p>
-          </div>
-        ) : (
-          <p className="mt-6 text-sm opacity-80">
-            Payment is made at the salon via UPI.
-          </p>
-        )}
-
         <p className="mt-6 text-sm opacity-80">
           Need to change something? Call {siteConfig.phone}.
         </p>
       </div>
     );
   }
+
+  const upiLink =
+    siteConfig.upiId && totalPrice > 0
+      ? buildUpiLink(totalPrice, `${siteConfig.name} booking`)
+      : null;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
@@ -338,15 +353,73 @@ export default function BookingForm({ services }) {
         </div>
       )}
 
+      {time && upiLink && (
+        <div className="rounded-2xl border border-accent/40 bg-white/60 p-6 text-center">
+          <p className="text-sm font-medium">5. Pay ₹{totalPrice} via UPI</p>
+          <div className="mt-4 inline-block rounded-2xl bg-white p-4">
+            <QRCodeSVG value={upiLink} size={192} />
+          </div>
+          <p className="mt-3 text-xs opacity-70">
+            Scan with any UPI app, or{" "}
+            <a href={upiLink} className="underline hover:text-accent">
+              tap here to open UPI app
+            </a>
+          </p>
+        </div>
+      )}
+
       {error && <p className="text-sm text-red-700">{error}</p>}
 
-      <button
-        type="submit"
-        disabled={selectedIds.length === 0 || !time || !name || !phone || submitting}
-        className="w-full rounded-full bg-ink px-6 py-3 text-sm text-paper transition hover:opacity-90 disabled:opacity-40"
-      >
-        {submitting ? "Booking…" : "Confirm booking"}
-      </button>
+      {time && (
+        <div className="space-y-3">
+          {!showUpload ? (
+            <button
+              type="button"
+              onClick={() => setShowUpload(true)}
+              disabled={selectedIds.length === 0 || !time || !name || !phone || submitting}
+              className="w-full rounded-full bg-ink px-6 py-3 text-sm text-paper transition hover:opacity-90 disabled:opacity-40"
+            >
+              I've paid, confirm booking
+            </button>
+          ) : (
+            <div className="space-y-3 rounded-2xl border border-accent/40 bg-white/60 p-4">
+              <label className="block text-sm font-medium">
+                Upload payment screenshot
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="block w-full text-sm file:mr-4 file:rounded-full file:border-0 file:bg-ink file:px-4 file:py-2 file:text-xs file:text-paper"
+              />
+              {screenshot && (
+                <img
+                  src={screenshot}
+                  alt="Payment screenshot preview"
+                  className="mx-auto max-h-48 rounded-xl border border-accent/40"
+                />
+              )}
+              <button
+                type="submit"
+                value="paid"
+                disabled={!screenshot || submitting}
+                className="w-full rounded-full bg-ink px-6 py-3 text-sm text-paper transition hover:opacity-90 disabled:opacity-40"
+              >
+                {submitting ? "Booking…" : "Submit screenshot & confirm booking"}
+              </button>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            value="salon"
+            disabled={selectedIds.length === 0 || !time || !name || !phone || submitting}
+            className="w-full rounded-full border border-ink px-6 py-3 text-sm text-ink transition hover:bg-ink hover:text-paper disabled:opacity-40"
+          >
+            {submitting ? "Booking…" : "Pay at salon"}
+          </button>
+        </div>
+      )}
     </form>
   );
 }
