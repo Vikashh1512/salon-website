@@ -15,6 +15,8 @@ const inter = Inter({
 export const metadata = {
   title: " The Biggest Salon",
   description: "Book your hair appointment online. Haircuts, colour, spa and more.",
+  manifest: "/manifest.webmanifest",
+  icons: { apple: "/icon-192.png" },
 };
 
 export default function RootLayout({ children }) {
