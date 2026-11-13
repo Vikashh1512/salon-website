@@ -13,8 +13,8 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "My Salon",
-  description: "Book your appointment online",
+  title: " The Biggest Salon",
+  description: "Book your hair appointment online. Haircuts, colour, spa and more.",
 };
 
 export default function RootLayout({ children }) {

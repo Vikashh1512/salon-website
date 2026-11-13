@@ -10,5 +10,5 @@ export const siteConfig = {
     { day: "Sunday", time: "Closed" },
   ],
   // Google Maps → your salon → Share → Embed a map → copy only the src="..." link
-  mapEmbedUrl: "https://www.google.com/maps/dir//27.4947974,74.9860742/@27.4947757,74.9860521,21z?entry=ttu&g_ep=EgoyMDI2MTEwOS4wIKXMDSoASAFQAw%3D%3D",
+  mapEmbedUrl: "https://maps.app.goo.gl/Rx4djZiJ5wbw89vJ6?g_st=ac",
 };
