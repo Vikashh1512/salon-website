@@ -89,11 +89,7 @@ export default function BookingsAdmin() {
       </div>
 
       {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
-      {loading && <p className="text-sm opacity-70">
-                    {b.booking_items?.length
-                      ? b.booking_items.map((i) => i.service_name).join(" + ")
-                      : b.services?.name}
-                  </p>
+      {loading && <p className="mt-6 text-sm opacity-70">Loading bookings…</p>}
       {!loading && bookings.length === 0 && !error && (
         <p className="mt-6 text-sm opacity-70">No bookings here.</p>
       )}
@@ -111,7 +107,11 @@ export default function BookingsAdmin() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="font-heading text-lg">{b.customer_name}</p>
-                  <p className="text-sm opacity-70">{b.services?.name}</p>
+                  <p className="text-sm opacity-70">
+                    {b.booking_items?.length
+                      ? b.booking_items.map((i) => i.service_name).join(" + ")
+                      : b.services?.name}
+                  </p>
                 </div>
                 <span
                   className={`rounded-full px-3 py-1 text-xs capitalize ${statusStyles[b.status]}`}
