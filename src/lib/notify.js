@@ -36,7 +36,10 @@ export async function sendPush(payload) {
   await Promise.all(
     subs.map(async (row) => {
       try {
-        await webpush.sendNotification(row.subscription, JSON.stringify(payload));
+                await webpush.sendNotification(row.subscription, JSON.stringify(payload), {
+          urgency: "high",
+          TTL: 60 * 60 * 4, // drop the alert if the phone stays offline for 4 hours
+        });
       } catch (err) {
         // 404/410 means this device no longer exists, so remove it
         if (err.statusCode === 404 || err.statusCode === 410) {
