@@ -1,17 +1,17 @@
 import Link from "next/link";
 
-export default function Button({ href, children, variant = "solid" }) {
+export default function Button({ href, variant = "solid", children }) {
+  const base =
+    "inline-flex items-center gap-4 px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] transition";
   const styles =
-    variant === "solid"
-      ? "bg-ink text-paper hover:opacity-90"
-      : "border border-ink text-ink hover:bg-ink hover:text-paper";
+    variant === "outline"
+      ? "border border-ink/40 text-ink hover:border-accent hover:text-accent"
+      : "bg-accent text-ink hover:opacity-90";
 
   return (
-    <Link
-      href={href}
-      className={`inline-block rounded-full px-6 py-3 text-sm transition ${styles}`}
-    >
-      {children}
+    <Link href={href} className={`${base} ${styles}`}>
+      <span>{children}</span>
+      <span aria-hidden="true">{variant === "outline" ? "→" : "↗"}</span>
     </Link>
   );
 }
