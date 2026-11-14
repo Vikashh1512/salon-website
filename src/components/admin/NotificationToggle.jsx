@@ -17,12 +17,13 @@ export default function NotificationToggle() {
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
-    async function check() {
+        async function check() {
       if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
         setSupported(false);
         return;
       }
       const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) reg.update(); // fetch the newest sw.js
       const sub = reg ? await reg.pushManager.getSubscription() : null;
       setEnabled(Boolean(sub) && Notification.permission === "granted");
     }
