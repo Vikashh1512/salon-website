@@ -64,16 +64,16 @@ export default function ContactPage() {
           </div>
         </div>
 
-        <div>
+                <div className="overflow-hidden rounded-2xl border-2 border-[#3a161a]">
           {siteConfig.mapEmbedUrl ? (
             <iframe
               src={siteConfig.mapEmbedUrl}
-              className="h-80 w-full rounded-2xl border-0"
+              className="block h-80 w-full border-0"
               loading="lazy"
               title="Salon location map"
             />
           ) : (
-            <div className="flex h-80 items-center justify-center rounded-2xl border border-accent/40 bg-white/60 text-sm opacity-70">
+            <div className="flex h-80 items-center justify-center bg-white/60 text-sm opacity-70">
               Map coming soon
             </div>
           )}

@@ -32,9 +32,11 @@ function toDateString(date) {
 const inputClass =
   "w-full rounded-xl border border-accent/40 bg-white/60 px-4 py-3 text-sm outline-none focus:border-accent";
 
-export default function BookingForm({ services }) {
+export default function BookingForm({ services, initialServiceId = null }) {
   const [limits, setLimits] = useState({ min: "", max: "" });
-  const [selectedIds, setSelectedIds] = useState([]);
+  const [selectedIds, setSelectedIds] = useState(() =>
+    services.some((s) => s.id === initialServiceId) ? [initialServiceId] : []
+  );
   const [date, setDate] = useState("");
   const [slots, setSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);

@@ -3,6 +3,8 @@ import Button from "@/components/Button";
 import ServiceCard from "@/components/ServiceCard";
 import { supabase } from "@/lib/supabase";
 import { siteConfig } from "@/lib/siteConfig";
+import ServicesSection from "@/components/ServicesSection";
+import AboutSection from "@/components/AboutSection";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +30,7 @@ export default async function Home() {
 
         {/* Vertical left rail text */}
         <div className="pointer-events-none absolute bottom-10 left-6 z-20 hidden origin-bottom-left -rotate-90 text-[10px] uppercase tracking-[0.32em] text-[#f3ead8]/45 lg:block">
-          DHOD, INDIA / THE ART OF BARBERING
+          DHOD, SIKAR / THE ART OF BARBERING
         </div>
 
         <div className="relative z-10 mx-auto flex min-h-[85vh] max-w-7xl flex-col justify-center px-6 py-20 md:px-16">
@@ -118,31 +120,9 @@ export default async function Home() {
       </section>
 
       {/* Featured services */}
-      <section className="mx-auto max-w-6xl px-6 py-16">
-        <h2 className="font-heading text-3xl uppercase">Our services</h2>
+            <ServicesSection services={services} showAllLink />
+      <AboutSection />
 
-        <div className="mt-8 grid gap-6 sm:grid-cols-3">
-          {services?.map((s) => (
-            <ServiceCard
-              key={s.id}
-              name={s.name}
-              description={s.description}
-              price={s.price}
-              duration={s.duration_minutes}
-            />
-          ))}
-        </div>
-
-        {(!services || services.length === 0) && (
-          <p className="mt-6 opacity-70">Services coming soon.</p>
-        )}
-
-        <div className="mt-10">
-          <Button href="/services" variant="outline">
-            See all services
-          </Button>
-        </div>
-      </section>
 
       {/* Call to action */}
       <section className="bg-gradient-to-b from-[#141110] via-[#241315] to-[#3a161a] py-20 text-center text-[#f3ead8]">

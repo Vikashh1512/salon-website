@@ -1,4 +1,4 @@
-import { Oswald, Inter } from "next/font/google";
+import { Oswald, Inter, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -12,6 +12,12 @@ const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
 });
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  style: ["italic"],
+  variable: "--font-cormorant",
+});
 
 export const metadata = {
   title: "The Biggest Salon",
@@ -22,7 +28,10 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${oswald.variable} ${inter.variable}`}>
+    <html
+      lang="en"
+      className={`${oswald.variable} ${inter.variable} ${cormorant.variable}`}
+    >
       <body className="font-body antialiased">
         <Navbar />
         {children}
