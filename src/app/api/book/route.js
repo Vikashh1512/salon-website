@@ -81,10 +81,11 @@ export async function POST(request) {
         .join(" + ") || "Appointment";
 
     const when = `${formatDate(date)} at ${formatTime(time)}`;
+    const ref = Math.floor(1000 + Math.random() * 9000);
 
-        await sendPush({
+    await sendPush({
       title: "New booking",
-      body: `${name} · ${names} · ₹${total} · ${when}`,
+      body: `${name} · ${names} · ₹${total} · ${when} · ref ${ref}`,
       url: "/admin",
       tag: `booking-${data?.booking_id ?? Date.now()}`,
     });

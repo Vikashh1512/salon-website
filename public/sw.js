@@ -16,7 +16,7 @@ self.addEventListener("push", (event) => {
   const tag = data.tag || `${data.title}|${data.body}`;
 
   event.waitUntil(
-    self.registration.showNotification(data.title, {
+        self.registration.showNotification(`${data.title} [v3]`, {
       body: data.body,
       tag,
       data: { url: data.url },
