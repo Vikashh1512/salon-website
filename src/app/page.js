@@ -28,7 +28,7 @@ export default async function Home() {
 
         {/* Vertical left rail text */}
         <div className="pointer-events-none absolute bottom-10 left-6 z-20 hidden origin-bottom-left -rotate-90 text-[10px] uppercase tracking-[0.32em] text-[#f3ead8]/45 lg:block">
-          SIKAR, INDIA / THE ART OF BARBERING
+          DHOD, INDIA / THE ART OF BARBERING
         </div>
 
         <div className="relative z-10 mx-auto flex min-h-[85vh] max-w-7xl flex-col justify-center px-6 py-20 md:px-16">
@@ -145,7 +145,7 @@ export default async function Home() {
       </section>
 
       {/* Call to action */}
-      <section className="bg-[#141110] py-16 text-center text-[#f3ead8]">
+      <section className="bg-gradient-to-b from-[#141110] via-[#241315] to-[#3a161a] py-20 text-center text-[#f3ead8]">
         <h2 className="font-heading text-3xl uppercase">Ready for a fresh look?</h2>
         <Link
           href="/book"

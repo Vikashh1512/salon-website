@@ -13,3 +13,17 @@ body {
   background: var(--color-paper);
   color: var(--color-ink);
 }
+
+@keyframes orbitSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.orbit-spin {
+  animation: orbitSpin 14s linear infinite;
+  transform-origin: center;
+}

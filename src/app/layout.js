@@ -1,11 +1,12 @@
-import { Playfair_Display, Inter } from "next/font/google";
+import { Oswald, Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-const playfair = Playfair_Display({
+const oswald = Oswald({
   subsets: ["latin"],
-  variable: "--font-playfair",
+  weight: ["600", "700"],
+  variable: "--font-oswald",
 });
 const inter = Inter({
   subsets: ["latin"],
@@ -13,7 +14,7 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: " The Biggest Salon",
+  title: "The Biggest Salon",
   description: "Book your hair appointment online. Haircuts, colour, spa and more.",
   manifest: "/manifest.webmanifest",
   icons: { apple: "/icon-192.png" },
@@ -21,7 +22,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
+    <html lang="en" className={`${oswald.variable} ${inter.variable}`}>
       <body className="font-body antialiased">
         <Navbar />
         {children}
