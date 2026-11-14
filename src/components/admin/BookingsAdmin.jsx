@@ -70,6 +70,14 @@ export default function BookingsAdmin() {
     else setReloadKey((k) => k + 1);
   }
 
+  async function deleteBooking(id) {
+    if (!window.confirm("Permanently delete this booking?")) return;
+    setError("");
+    const { error } = await supabase.from("bookings").delete().eq("id", id);
+    if (error) setError("Could not delete the booking.");
+    else setReloadKey((k) => k + 1);
+  }
+
   return (
     <div>
       <div className="flex flex-wrap gap-2">
@@ -188,6 +196,12 @@ export default function BookingsAdmin() {
                     Restore
                   </button>
                 )}
+                <button
+                  onClick={() => deleteBooking(b.id)}
+                  className="rounded-full border border-red-700 px-4 py-2 text-xs text-red-700 transition hover:bg-red-700 hover:text-white"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           );
