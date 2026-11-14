@@ -134,16 +134,7 @@ export default function BookingsAdmin() {
                 </p>
               )}
 
-              {b.payment_screenshot && (
-                <div className="mt-3">
-                  <p className="mb-1 text-xs opacity-70">Payment screenshot:</p>
-                  <img
-                    src={b.payment_screenshot}
-                    alt="Payment screenshot"
-                    className="max-h-56 rounded-xl border border-accent/40"
-                  />
-                </div>
-              )}
+              
               {b.payment_screenshot && (
                 <details className="mt-2 text-xs">
                   <summary className="cursor-pointer text-accent hover:underline">

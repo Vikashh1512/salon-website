@@ -52,22 +52,17 @@ export async function POST(request) {
 
   const total = data?.total_price ?? null;
 
-  if (screenshot) {
-    const { data: latest } = await supabaseAdmin
-      .from("bookings")
-      .select("id")
-      .eq("booking_date", date)
-      .eq("start_time", time)
-      .eq("phone", phone.trim())
-      .order("id", { ascending: false })
-      .limit(1)
-      .single();
+    if (screenshot && data?.booking_id) {
+    const looksValid =
+      typeof screenshot === "string" &&
+      screenshot.startsWith("data:image/jpeg;base64,") &&
+      screenshot.length < 700000;
 
-    if (latest?.id) {
+    if (looksValid) {
       const { error: upErr } = await supabaseAdmin
         .from("bookings")
         .update({ payment_screenshot: screenshot })
-        .eq("id", latest.id);
+        .eq("id", data.booking_id);
       if (upErr) console.error("Screenshot save error:", upErr);
     }
   }
@@ -87,10 +82,11 @@ export async function POST(request) {
 
     const when = `${formatDate(date)} at ${formatTime(time)}`;
 
-    await sendPush({
+        await sendPush({
       title: "New booking",
       body: `${name} · ${names} · ₹${total} · ${when}`,
       url: "/admin",
+      tag: `booking-${data?.booking_id ?? Date.now()}`,
     });
   } catch (e) {
     console.error("Notification failed:", e);
