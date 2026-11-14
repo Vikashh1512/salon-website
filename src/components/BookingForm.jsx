@@ -125,13 +125,9 @@ export default function BookingForm({ services }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const paidOnline = e.nativeEvent?.submitter?.value === "paid";
+    const paidOnline =
+      e.nativeEvent.submitter?.value === "paid" && Boolean(screenshot);
     setError("");
-
-    if (paidOnline && !screenshot) {
-      setError("Please upload your payment screenshot first.");
-      return;
-    }
 
     setSubmitting(true);
 
@@ -209,6 +205,23 @@ export default function BookingForm({ services }) {
         <p className="mt-6 text-sm opacity-80">
           Need to change something? Call {siteConfig.phone}.
         </p>
+
+        <button
+          type="button"
+          onClick={() => {
+            setConfirmed(null);
+            setSelectedIds([]);
+            setDate("");
+            setTime("");
+            setName("");
+            setPhone("");
+            setShowUpload(false);
+            setScreenshot("");
+          }}
+          className="mt-6 inline-block rounded-full border border-ink px-6 py-2 text-sm transition hover:bg-ink hover:text-paper"
+        >
+          Book another appointment
+        </button>
       </div>
     );
   }
